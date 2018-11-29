@@ -10,6 +10,6 @@ task :default do
 end
 
 def test_commit
-  $("git commit --allow-empty -m \"[skip ci] test empty $(git rev-parse HEAD)\"")
-  $("git push origin source")
+  sh("git commit --allow-empty -m \"[skip ci] test empty $(git rev-parse HEAD)\"")
+  sh("git push origin source")
 end
