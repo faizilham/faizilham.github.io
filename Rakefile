@@ -4,8 +4,6 @@ task :default do
   sh("JEKYLL_ENV=production bundle exec jekyll build")
   sh("touch _site/.nojekyll")
 
-  test_commit
-
   puts "Jekyll successfully built"
 end
 
