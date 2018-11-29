@@ -3,6 +3,13 @@ task :default do
 
   sh("JEKYLL_ENV=production bundle exec jekyll build")
   sh("touch _site/.nojekyll")
-  sh("git status")
+
+  test_commit
+
   puts "Jekyll successfully built"
+end
+
+def test_commit
+  $("git commit --allow-empty -m \"[skip ci] test empty $(git rev-parse HEAD)\"")
+  $("git push origin source")
 end
