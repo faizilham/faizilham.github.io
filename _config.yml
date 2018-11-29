@@ -32,9 +32,6 @@ permalink: /:year/:month/:title
 
 show_excerpts: false # set to true to show excerpts on the homepage
 
-include:
-  - .nojekyll
-
 exclude:
   - script
   - README.md
