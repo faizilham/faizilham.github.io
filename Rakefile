@@ -10,6 +10,9 @@ task :default do
 end
 
 def test_commit
+  sh("git config user.name \"Deployment Bot (from Travis CI)\"")
+  sh("git config user.email \"deploy@travis-ci.org\"")
   sh("git commit --allow-empty -m \"[skip ci] test empty $(git rev-parse HEAD)\"")
-  sh("git push origin source")
+  sh("git remote add production https://${GITHUB_TOKEN}@github.com/faizilham/faizilham.github.io.git")
+  sh("git push production source")
 end
