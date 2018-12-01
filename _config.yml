@@ -52,15 +52,16 @@ jekyll-archives:
     - tags
     - year
     - month
+  layout: archive
   permalinks:
     year: '/:year/'
     month: '/:year/:month/'
     tag: '/tag/:name/'
 
-  layouts:
-    year: year-archive
-    month: month-archive
-    tag: tag-archive
+  # layouts:
+  #   year: year-archive
+  #   month: month-archive
+  #   tag: tag-archive
 
 # If you want to link only specific pages in your header, uncomment
 # this and add the path to the pages in order as they should show up

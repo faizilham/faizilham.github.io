@@ -1,9 +1,22 @@
----
-layout: default
----
+{% capture archive_title %}
+  {% if page.type == "tag" %}
+    Tag: {{ page.title | titleize }}
+  {% elsif page.type == "month" %}
+    Archive from {{ page.date | date: "%B %Y" }}
+  {% elsif page.type == "year" %}
+    Archive from {{ page.date | date: "%Y" }}
+  {% else %}
+    Archive
+  {% endif %}
+{% endcapture %}
 
+{% capture custom_title %}
+  {{ archive_title }} | {{ site.title }}
+{% endcapture %}
+
+{%- capture content -%}
 <div class="home">
-  {{ content }}
+  <h1 class="page-heading">{{ archive_title }}</h1>
 
   {%- if page.posts.size > 0 -%}
     <ul class="post-list">
@@ -26,3 +39,6 @@ layout: default
     <p class="feed-subscribe"><svg class="svg-icon orange"><use xlink:href="{{ '/assets/minima-social-icons.svg#rss' | relative_url }}"></use></svg><a href="{{ "/feed.xml" | relative_url }}">Subscribe</a></p>
   {%- endif -%}
 </div>
+{%- endcapture -%}
+
+{%- include base.html content=content -%}
