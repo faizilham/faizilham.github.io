@@ -61,7 +61,7 @@ jekyll-archives:
 # crosspost to medium
 jekyll-crosspost_to_medium:
   enabled: true
-  status: draft
+  status: public
   text: '<p><i>This article was originally posted on <a href="{{ url }}" rel="canonical">my site</a>.</i></p>'
 
 # If you want to link only specific pages in your header, uncomment
