@@ -67,7 +67,7 @@ PLATFORMS
   x64-mingw32
 
 DEPENDENCIES
-  jekyll
+  jekyll (~> 3.8)
   jekyll-archives
   jekyll-feed
   jekyll-seo-tag
