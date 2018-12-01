@@ -33,6 +33,12 @@ permalink: /:year/:month/:title
 
 show_excerpts: false # set to true to show excerpts on the homepage
 
+# If you want to link only specific pages in your header, uncomment
+# this and add the path to the pages in order as they should show up
+
+header_pages:
+- about.md
+
 exclude:
   - script
   - README.md
@@ -64,11 +70,8 @@ jekyll-crosspost_to_medium:
   status: public
   text: '<p><i>This article was originally posted on <a href="{{ url }}" rel="canonical">my site</a>.</i></p>'
 
-# If you want to link only specific pages in your header, uncomment
-# this and add the path to the pages in order as they should show up
-
-header_pages:
-- about.md
+sass:
+  style: compressed
 
 # Build settings
 
