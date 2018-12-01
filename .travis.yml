@@ -3,7 +3,7 @@ cache: bundler
 rvm:
 - 2.3.4
 install:
-- bundle install
+- bundle install --jobs=3 --deployment
 deploy:
   provider: pages
   skip_cleanup: true
