@@ -65,12 +65,6 @@ jekyll-archives:
     month: '/:year/:month/'
     tag: '/tag/:name/'
 
-# crosspost to medium
-jekyll-crosspost_to_medium:
-  enabled: true
-  status: public
-  text: '<p><i>This article was originally posted on <a href="{{ url }}" rel="canonical">my site</a>.</i></p>'
-
 sass:
   style: compressed
 
