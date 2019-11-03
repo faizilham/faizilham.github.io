@@ -1,0 +1,4 @@
+#!/bin/sh
+# copy this to .git/hooks
+
+rake precommit

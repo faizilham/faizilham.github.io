@@ -7,3 +7,7 @@ task :default do
 
   puts "Jekyll successfully built"
 end
+
+task :precommit do
+  sh("bundle exec jekyll doctor")
+end
