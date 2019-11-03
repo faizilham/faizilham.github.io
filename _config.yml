@@ -61,9 +61,9 @@ jekyll-archives:
     - month
   layout: archive
   permalinks:
-    year: '/archive/:year'
-    month: '/archive/:year-:month'
-    tag: '/tag/:name'
+    year: '/archive/:year/'
+    month: '/archive/:year-:month/'
+    tag: '/tag/:name/'
 
 sass:
   style: compressed
