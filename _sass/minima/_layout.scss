@@ -217,6 +217,14 @@
   color: $grey-color;
 }
 
+.post-date {
+  color: $grey-color;
+
+  &:visited {
+    color: $grey-color;
+  }
+}
+
 .post-link {
   display: block;
   @include relative-font-size(1.5);
