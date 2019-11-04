@@ -206,10 +206,6 @@
 .post-list {
   margin-left: 0;
   list-style: none;
-
-  > li {
-    margin-bottom: $spacing-unit;
-  }
 }
 
 .post-meta {
@@ -230,7 +226,13 @@
   @include relative-font-size(1.5);
 }
 
+.archive-list-header {
+  color: $text-color;
 
+  &:visited {
+    color: $text-color;
+  }
+}
 
 /**
  * Posts

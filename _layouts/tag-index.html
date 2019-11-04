@@ -3,7 +3,7 @@ layout: default
 ---
 
 <div class="home">
-  <h1 class="page-heading">Tags</h1>
+  <h1 class="page-heading">{{ page.title | escape }}</h1>
 
   <ul>
     {%- assign tags = site.tags | sort -%}
