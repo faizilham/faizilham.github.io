@@ -1,0 +1,22 @@
+---
+layout: default
+---
+
+<div class="home">
+  <h1 class="page-heading">Tags</h1>
+
+  <ul>
+    {%- assign tags = site.tags | sort -%}
+
+    {%- for tag in tags -%}
+    {%- assign tagname = tag | first -%}
+    {%- assign count = tag | last | size -%}
+
+    <li>
+      <a href="/tag/{{tagname}}">
+        {{ tagname | titleize }} ({{ count }})
+      </a>
+    </li>
+    {%- endfor -%}
+  </ul>
+</div>

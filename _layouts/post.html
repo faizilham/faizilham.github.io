@@ -9,7 +9,7 @@ layout: default
     <p class="post-meta">
       Posted at
       <time class="dt-published" datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">
-        <a class="post-date" href="/archive/{{page.date | date: '%Y'}}">{{ page.date | date: "%Y" }}</a>-<a class="post-date" href="/archive/{{page.date | date: '%Y-%m'}}">{{ page.date | date: "%m" }}</a>-{{ page.date | date: "%d" }}
+        <a class="post-date" href="/archive/{{page.date | date: '%Y'}}">{{ page.date | date: "%Y" }}</a>-{{ page.date | date: "%m" }}-{{ page.date | date: "%d" }}
       </time>
 
       {%- if page.tags.size > 0 -%}

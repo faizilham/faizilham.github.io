@@ -58,11 +58,9 @@ jekyll-archives:
   enabled:
     - tags
     - year
-    - month
   layout: archive
   permalinks:
     year: '/archive/:year/'
-    month: '/archive/:year-:month/'
     tag: '/tag/:name/'
 
 sass:
