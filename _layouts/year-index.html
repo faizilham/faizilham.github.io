@@ -3,7 +3,9 @@ layout: default
 ---
 
 <div class="home">
-  <h1 class="page-heading">{{ page.title | escape }}</h1>
+  <header class="post-header">
+    <h1 class="post-title">{{ page.title | escape }}</h1>
+  </header>
 
   {%- for post in site.posts -%}
     {% capture this_year %}{{ post.date | date: "%Y" }}{% endcapture %}
