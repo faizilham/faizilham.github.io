@@ -18,14 +18,30 @@
   margin-bottom: 0;
   float: left;
 
+  &:hover{
+    text-decoration: none;
+  }
+
   @include media-query($on-palm) {
     padding-right: 45px;
   }
+}
 
+.site-title-text {
   &,
   &:visited {
     color: $grey-color-dark;
   }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.site-logo {
+  vertical-align: text-bottom;
+  width: 32px;
+  height: 32px;
 }
 
 .site-nav {
