@@ -1,0 +1,45 @@
+---
+layout: default
+---
+<article class="post">
+  <h1 class="page-heading">{{ page.title | escape }}</h1>
+
+  <div class="post-content">
+    Projects, experiments, and other things I made
+  </div>
+
+  <ul class="lab-list">
+    {%- for entry in site.data.lab_entries -%}
+    <li>
+      {%- assign thumbnail = entry.thumb | default: "default.png" -%}
+      <img class="lab-thumbnail" src="{{ thumbnail | prepend: 'img/lab/' | relative_url }}" width="200" height="150"/>
+      <div class="lab-entry">
+        <h3 class="lab-title">{{ entry.title | escape }}</h3>
+        <div class="post-meta">{{ entry.date | date: "%B %Y" }}</div>
+        <div class="lab-description">
+          {{ entry.desc }}
+        </div>
+        <div class="lab-links">
+          {%- if entry.demo -%}
+            <a href="{{ entry.demo }}">
+              <svg class="lab-svg-icon grey"><use xlink:href="{{ '/assets/minima.svg#demo' | relative_url }}"></use></svg>
+              Demo
+            </a>
+          {%- endif -%}
+          {%- if entry.github -%}
+            <a href="{{ entry.github }}">
+              <svg class="lab-svg-icon grey"><use xlink:href="{{ '/assets/minima.svg#github' | relative_url }}"></use></svg>
+              Github
+            </a>
+          {%- endif -%}
+          {%- if entry.post -%}
+            <svg class="lab-svg-icon grey"><use xlink:href="{{ '/assets/minima.svg#post' | relative_url }}"></use></svg>
+            <a href="{{entry.post | relative_url}}">Post</a>
+          {%- endif -%}
+        </div>
+      </div>
+    </li>
+    {%- endfor -%}
+  </ul>
+
+</article>

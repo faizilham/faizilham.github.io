@@ -279,3 +279,49 @@
     }
   }
 }
+
+
+/*
+* Lab Entries
+*/
+.lab-list {
+  margin-left: 0;
+  list-style: none;
+
+  li {
+    margin-bottom: 1.5em;
+  }
+}
+
+.lab-thumbnail {
+  display: inline-block;
+}
+
+.lab-entry {
+  display: inline-block;
+  margin-left: 1em;
+  vertical-align: top;
+}
+
+.lab-title {
+  margin: 0;
+  display: block;
+  @include relative-font-size(1.5);
+}
+
+.lab-links {
+  margin-top: .5em;
+  a {
+    display: inline-block;
+    margin-right: .75em;
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}
+
+.lab-svg-icon {
+  @extend .svg-icon;
+  padding-right: 0;
+}

@@ -1,0 +1,7 @@
+- title: CHIP-8 Emulator
+  date: 2019-11-16
+  desc: A CHIP-8 emulator in Rust compiled to WebAssembly
+  thumb: chip8.png
+  demo: chip8
+  github: https://github.com/faizilham/chip8-rs
+  post:
