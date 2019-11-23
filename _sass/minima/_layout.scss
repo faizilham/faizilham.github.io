@@ -300,6 +300,15 @@
   }
 }
 
+.center-piece {
+  text-align: center;
+  margin-bottom: $spacing-unit / 2;
+  @include relative-font-size(0.8);
+}
+
+.img-container {
+  margin-bottom: $spacing-unit / 4;
+}
 
 /*
 * Lab Entries
