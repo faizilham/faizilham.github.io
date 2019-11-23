@@ -29,6 +29,9 @@ linkedin_username: faizilham
 # - username: jekyll2
 #   instance: example.com
 
+disqus:
+  shortname: labsfaiz
+
 permalink: /:title
 
 show_excerpts: true # set to true to show excerpts on the homepage
