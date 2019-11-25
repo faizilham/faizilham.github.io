@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>CHIP-8 Emulator</title>
     <link rel="shortcut icon" href="assets/icon_yb.png" id="icon" />
-  <link href="style-2f021e05.css" rel="stylesheet"></head>
+  <link href="style-b1db0843.css" rel="stylesheet"></head>
   <body>
     <div class="outer">
       <h1 class="title">CHIP-8 Emulator</h1>
@@ -42,8 +42,8 @@
                   Load/Store regs: opcodes Fx55 & Fx65 won't increase I register by x + 1
                 </label>
                 <label class="chk-quirk">
-                    <input type="checkbox" id="quirkClipSpriteChk" />
-                    Clip sprite: When drawn outside of display, clip sprite instead of wrapping around
+                    <input type="checkbox" id="quirkWrapSpriteChk" />
+                    Wrap sprite: when parts of sprite are drawn outside of display, wrap it instead of clipping it
                   </label>
               </div>
 
@@ -83,5 +83,5 @@ A 0 B F      Z X C V</pre>
       </div>
     </div>
     <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
-  <script type="text/javascript" src="index-2f021e05.js"></script></body>
+  <script type="text/javascript" src="index-b1db0843.js"></script></body>
 </html>
