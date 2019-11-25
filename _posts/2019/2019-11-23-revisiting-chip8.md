@@ -56,12 +56,13 @@ three prominent quirks that can be toggled on or off by configuration.
     Some newer games do not take into account the register I increment, and behaves as if I is not
     changed by these instructions. Tic-Tac-Toe and Space Invaders also have this quirk.
 
-3. Sprite clipping
+3. Sprite wrapping
 
-    A sprite drawn outside of display boundary will be wrapped around the opposite end of the screen
-    in the original Chip-8. The Cowgod reference actually documents this behavior as the correct one.
-    However, there are a few games that behave as if the sprite is clipped and the pixel drawn outside of
-    the display is not wrapped around. One notable game exhibiting this quirk is Blitz.
+    The Cowgod's reference said that a sprite partially drawn outside of display boundary will be
+    wrapped around at the opposite end of the screen. This is not the [right behavior](http://laurencescotford.co.uk/?p=304).
+    A sprite will be clipped if it's partially drawn outside of display, but it will be wrapped around
+    if *all* of the sprite is drawn outside of the display. I'm not really sure if there are any games that depend
+    on sprite wrapping behavior, but I'll give the option to do so.
 
 ### Fx0A Wait Key Implementation
 There are three instructions related to keypad input read: `Ex9E` skip if key Vx pressed, `ExA1` skip if key Vx
