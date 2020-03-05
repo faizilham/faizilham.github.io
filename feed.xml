@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="https://faizilham.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://faizilham.github.io/" rel="alternate" type="text/html" /><updated>2020-03-05T03:31:46+00:00</updated><id>https://faizilham.github.io/feed.xml</id><title type="html">faiz.memdump()</title><subtitle>A digital snapshot of my memories
+</subtitle><author><name>Faiz Ilham</name></author><entry><title type="html">Revisiting Chip-8</title><link href="https://faizilham.github.io/revisiting-chip8" rel="alternate" type="text/html" title="Revisiting Chip-8" /><published>2019-11-23T00:00:00+00:00</published><updated>2019-11-23T00:00:00+00:00</updated><id>https://faizilham.github.io/revisiting-chip8</id><content type="html" xml:base="https://faizilham.github.io/revisiting-chip8">&lt;p&gt;It’s been a while since I write emulator projects. While I do want to make more “serious” emulator like
+NES or GameBoy, I decided to do a warm up project by writing a &lt;a href=&quot;/lab/chip8&quot;&gt;Chip-8 emulator&lt;/a&gt; once more.
+Here are some interesting things I found and implemented during the development.&lt;/p&gt;
+
+&lt;h3 id=&quot;dealing-with-flicker&quot;&gt;Dealing with Flicker&lt;/h3&gt;
+&lt;p&gt;Chip-8 games are by nature flickery. This happens because in original Chip-8 the only way to move a sprite is by clearing screen
+or erasing the sprite first, and then redraw it at the new position. Since it can only be done in two instructions,
+it means the erase and the draw instruction may be seperated in different update-draw cycles, thus
+results in flickering. This is even more pronounced when we consider that the CPU vs display speed ratio of Chip-8
+is quite low (500:60 Hz, so 8-9 instructions/draw) and that there are usually several instructions seperating the erase and draw
+instructions (e.g. for recalculating new sprite position without storing the old one).&lt;/p&gt;
+
+&lt;p&gt;There are some ways to deal with this. First, by not dealing with it and let it flicks. This is the easiest
+method and actually accurate with the behavior of original Chip-8, but I want to do more here. Second,
+by pooling the draw instruction to be actually drawn only after several instructions later, so that a pair of
+erase-draw instruction is &lt;em&gt;probably&lt;/em&gt; done in one actual draw. I don’t really like this approach since
+it’s likely hard to get the right timing for every kinds of games or ROMs, and it can introduce visual
+glitches in some edge cases.&lt;/p&gt;
+
+&lt;p&gt;The last method is by simulating the old phosphor screen behavior. Old phosphor screens have light decay time,
+meaning that when a pixel is turned off from a previously turned on state it still gives off a fading afterglow
+light for several milliseconds. I like this method since it only changes the behavior of the off pixels
+and simulates the real screen behavior, so I implemented it. The result quite pleases me.&lt;/p&gt;
+
+&lt;div class=&quot;center-piece&quot;&gt;
+    &lt;div class=&quot;img-container&quot;&gt;
+    &lt;img src=&quot;/img/2019/chip8_normal_ufo.gif&quot; width=&quot;350&quot; title=&quot;Normal flickery display&quot; /&gt;
+    &lt;img src=&quot;/img/2019/chip8_phosphor_ufo.gif&quot; width=&quot;350&quot; title=&quot;Simulated phosphor screen display&quot; /&gt;
+    &lt;/div&gt;
+    Normal Flickery Display vs Simulated Phosphor Display
+&lt;/div&gt;
+
+&lt;h3 id=&quot;implementation-quirks&quot;&gt;Implementation Quirks&lt;/h3&gt;
+&lt;p&gt;I used &lt;a href=&quot;http://devernay.free.fr/hacks/chip8/C8TECH10.HTM&quot;&gt;Cowgod’s Chip-8 Reference&lt;/a&gt; as my primary reference
+when I made my &lt;a href=&quot;https://github.com/faizilham/chip8js&quot;&gt;previous CHIP-8 project&lt;/a&gt;. It turns out that there are some
+implementation quirks that is documented as the original behavior in the reference, and my old emulator didn’t
+handle it when games, especially older ones, expect the original behavior. In this project, I handled
+three prominent quirks that can be toggled on or off by configuration.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;SHL &amp;amp; SHR instruction quirk&lt;/p&gt;
+
+    &lt;p&gt;In the original Chip-8, instruction &lt;code class=&quot;highlighter-rouge&quot;&gt;8xy8&lt;/code&gt; SHR and &lt;code class=&quot;highlighter-rouge&quot;&gt;8xyE&lt;/code&gt; SHL should shift the value of register Vx by value
+ of Vy, so that these instructions are interpreted as &lt;code class=&quot;highlighter-rouge&quot;&gt;Vx = Vx &amp;gt;&amp;gt; Vy&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;Vx = Vx &amp;lt;&amp;lt; Vy&lt;/code&gt;.
+ Some newer games mistakenly use this instruction as if it shift Vx by itself, i.e. &lt;code class=&quot;highlighter-rouge&quot;&gt;Vx = Vx &amp;gt;&amp;gt; Vx&lt;/code&gt;
+ and &lt;code class=&quot;highlighter-rouge&quot;&gt;Vx = Vx &amp;lt;&amp;lt; Vx&lt;/code&gt;. Notable games with this quirky behavior are Tic-Tac-Toe and Space Invaders.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Load &amp;amp; Store Register instruction quirk&lt;/p&gt;
+
+    &lt;p&gt;In the original Chip-8, instruction &lt;code class=&quot;highlighter-rouge&quot;&gt;Fx55&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;Fx65&lt;/code&gt; should store/load register the values of V0 to Vx
+ into/from memory starting from address I, and then increment register I by x (&lt;code class=&quot;highlighter-rouge&quot;&gt;I = I + x&lt;/code&gt;).
+ Some newer games do not take into account the register I increment, and behaves as if I is not
+ changed by these instructions. Tic-Tac-Toe and Space Invaders also have this quirk.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Sprite wrapping&lt;/p&gt;
+
+    &lt;p&gt;The Cowgod’s reference said that a sprite partially drawn outside of display boundary will be
+ wrapped around at the opposite end of the screen. This is not the &lt;a href=&quot;http://laurencescotford.co.uk/?p=304&quot;&gt;right behavior&lt;/a&gt;.
+ A sprite will be clipped if it’s partially drawn outside of display, but it will be wrapped around
+ if &lt;em&gt;all&lt;/em&gt; of the sprite is drawn outside of the display. I’m not really sure if there are any games that depend
+ on sprite wrapping behavior, but I’ll give the option to do so.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;fx0a-wait-key-implementation&quot;&gt;Fx0A Wait Key Implementation&lt;/h3&gt;
+&lt;p&gt;There are three instructions related to keypad input read: &lt;code class=&quot;highlighter-rouge&quot;&gt;Ex9E&lt;/code&gt; skip if key Vx pressed, &lt;code class=&quot;highlighter-rouge&quot;&gt;ExA1&lt;/code&gt; skip if key Vx
+not pressed, and &lt;code class=&quot;highlighter-rouge&quot;&gt;Fx0A&lt;/code&gt; wait until key is pressed and store to Vx. Instruction &lt;code class=&quot;highlighter-rouge&quot;&gt;Ex9E&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;ExA1&lt;/code&gt; is just like that: skip
+next instruction if key Vx is pressed / not pressed. For &lt;code class=&quot;highlighter-rouge&quot;&gt;Fx0A&lt;/code&gt; however, the description is a bit misleading.
+According to this &lt;a href=&quot;https://retrocomputing.stackexchange.com/questions/358/how-are-held-down-keys-handled-in-chip-8&quot;&gt;thread&lt;/a&gt;
+and &lt;a href=&quot;http://laurencescotford.co.uk/?p=347&quot;&gt;post&lt;/a&gt;, the correct behavior of &lt;code class=&quot;highlighter-rouge&quot;&gt;Fx0A&lt;/code&gt; is something like this:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Stop execution until a key is pressed&lt;/li&gt;
+  &lt;li&gt;When a key is pressed, store that key temporarily as K if K is not set. Execution is still stopped.&lt;/li&gt;
+  &lt;li&gt;When key K is released after it was pressed, store K to Vx, unset K and continue execution&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;rust-to-webassembly&quot;&gt;Rust to WebAssembly&lt;/h3&gt;
+&lt;p&gt;I wrote my previous CHIP-8 emulator in C compiled to WebAssembly by using Emscripten. I used Rust compiled to WebAssembly
+in this project, because I always want to try it. The rust-to-wasm compilation is done by using
+&lt;a href=&quot;https://github.com/rustwasm/wasm-pack&quot;&gt;wasm-pack toolkit&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;I found the wasm-pack toolkit is quite easy to use. The resulting wasm file can also be integrated and bundled
+easily using webpack. While I do like parcel more than webpack, unfortunately there are still some integration
+issues between wasm-pack and parcel, so I just use webpack. Building the project is a two-step process:
+(1) build the wasm file from Rust using wasm-pack, and (2) bundle the wasm file, Javascript loader, styles,
+and other files using webpack.&lt;/p&gt;
+
+&lt;p&gt;I wrote the CPU and display buffer of the emulator in Rust. However, for the actual I/O parts like drawing
+the display buffer to canvas, playing beep sound and reading key input, I still use Javascript.
+I did this because currently WebAssembly can’t access DOM directly without moving some data from and into
+the WebAssembly memory buffer. While wasm-pack can generate the bridge code easily, I don’t think the required data moving
+is worth the performance than just directly using Javascript. In contrast, the Javascript code can directly read
+WebAssembly memory buffer, so it doesn’t need to copy anything. I think this is the best solution
+until WebAssembly can access DOM directly.&lt;/p&gt;
+
+&lt;p&gt;Another advantage of offloading the I/O codes from wasm to Javascript is size. In previous project, I used
+SDL2 for drawing the canvas, playing beep sound and read key input. While using SDL2 is neat, it results
+in a big-sized wasm file, since it also includes all the SDL2 library codes. For comparison, my old
+emulator page size is around 5 MB, whereas the new emulator is under 100 KB.&lt;/p&gt;
+
+&lt;h3 id=&quot;closure&quot;&gt;Closure&lt;/h3&gt;
+&lt;p&gt;It’s been quite a fun revisiting the Chip-8 emulation. At first I wanted to extend the emulator
+to include SuperChip instructions and increase the overall emulation accuracy, but I decided the effort
+is best used in more “serious” emulator. I’m sure there are still some edge cases that my emulator can’t handle accurately.
+For the next emulator, I’m probably going for the original Space Invaders on Taito 8080 arcade system, since it seems
+quite easier to make than NES or GameBoy.&lt;/p&gt;</content><author><name>Faiz Ilham</name></author><category term="emulator" /><category term="javascript" /><category term="rust" /><category term="web-assembly" /><summary type="html">It’s been a while since I write emulator projects. While I do want to make more “serious” emulator like NES or GameBoy, I decided to do a warm up project by writing a Chip-8 emulator once more. Here are some interesting things I found and implemented during the development.</summary></entry></feed>
