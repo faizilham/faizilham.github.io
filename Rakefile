@@ -1,12 +1,11 @@
 task :default do
-  puts "Running CI tasks..."
-
-  sh("JEKYLL_ENV=production bundle exec jekyll doctor")
-  sh("JEKYLL_ENV=production bundle exec jekyll build")
-  sh("touch _site/.nojekyll")
-
-  puts "Jekyll successfully built"
+  sh("sh ./script/build.sh")
 end
+
+task :deploy do
+  sh("sh ./script/deploy.sh")
+end
+
 
 task :precommit do
   sh("bundle exec jekyll doctor")
