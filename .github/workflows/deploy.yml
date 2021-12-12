@@ -24,4 +24,11 @@ jobs:
     - name: Build
       run: bundle exec rake
     - name: Deployment
-      run: bundle exec rake deploy
+      uses: s0/git-publish-subdir-action@v2.5.0
+      env:
+        REPO: self
+        BRANCH: master
+        FOLDER: _site
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SQUASH_HISTORY: true
+        MESSAGE: "Deployment {sha}\n{msg}"
