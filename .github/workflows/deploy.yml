@@ -9,7 +9,7 @@ name: Blog Deployment
 
 on:
   push:
-    branches: [ source ]
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -27,7 +27,7 @@ jobs:
       uses: s0/git-publish-subdir-action@v2.5.0
       env:
         REPO: self
-        BRANCH: master
+        BRANCH: site
         FOLDER: _site
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SQUASH_HISTORY: true
