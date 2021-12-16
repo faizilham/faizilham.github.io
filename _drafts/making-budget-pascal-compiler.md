@@ -26,6 +26,39 @@ I wanted the hangman game to be playable on a web page. There are three approach
 
 While it is possible to just manually produce WebAssembly binary bytecodes, I used the [binaryen-js](https://github.com/AssemblyScript/binaryen.js/) library because it's easier and it also have validation and optimization features. The downside is that it is quite large, about 5 MB even after packed using parceljs. It also uses tree representation for validating and optimizing the WebAssembly module, so a few expressions like multivalue tuples and manual stack manipulation are a little bit harder to express. At the time I didn't realize there's also [wabt.js](https://github.com/AssemblyScript/wabt.js), so it is possible to produce WebAssembly code in text format first and then convert it to binary format.
 
+### Implementing types and variable scope
+WebAssembly has concept for local variable, so locally-used variable can be implemented using that. However, it can only store integer or float value. For basic types the compiler can just directly use `f64` variable for real and `i32` variable for ordinals (integer, char, boolean), but for complex type like string, array, or record, it needs to maintain a call stack in the memory and store the address of the value as an `i32` local variable. Values in the call stack are allocated when a subroutine is called, and deallocated when the subroutine returns. The call stack is implemented in three parts:
+1. Two global variable SP (stack pointer) and (FP) frame pointer. SP stores an address to top of value stack, and FP stores an address to top of call frame stack.
+2. Value stack, a region of the memory that stores complex type values.
+3. Call frame stack, a region of the memory that stores base address of the value stack for that call and subroutine id.
+
+Consider the following pascal program:
+```pascal
+program test;
+    type SmallStr = string[9];
+    var str: SmallStr;
+
+    procedure a(strA: SmallStr);
+    begin
+        // ...
+    end;
+
+    procedure b(strB: SmallStr);
+    var strB1: SmallStr;
+    begin
+        // ...
+        a(strB);
+    end;
+
+begin
+    b(str);
+end.
+```
+
+When procedure `a` is called, the call frame and value stack would look something like this in memory.
+![image](/img/2021/budget-pascal-stack.png)
+
+Things are a little more complicated for non-locally used variable. One of the limitation of WebAssembly local variable is that it can't be referenced as a pointer from outside of that function that declare it. So all non-locally used variable must be stored in memory no matter the type. This includes using upper-scope variable and using variable as an argument to a var parameter.
 
 #### Footnotes
 
