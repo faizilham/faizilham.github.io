@@ -8,7 +8,7 @@ tags: compiler web-assembly
 
 About a month ago, I was reorganizing my old files in my laptop when I found something interesting. It was a console-based hangman game that my friends and I made in Pascal as a final project for intro to programming class[^1] back in 2011. At the time I had just finished reading [Crafting Interpreters](https://craftinginterpreters.com/) by Robert Nystrom, so I thought it would be fun to move to compilers and try to compile the hangman game to WebAssembly. Here are some interesting things I learned and made during the development.
 
-### Chosen features
+### Choosing and "budgeting" the features
 Making a full-fledge Pascal compiler is a very time-consuming task. I want the project to be small enough that I can finish it in 4-6 weeks, so I decided to support only a subset of Pascal features and language constructs (hence, "budget"). I chose which features to implement based on three principles:
 1. The compiler should be able to compile the hangman game without any changes to the game's source code. This means I need to handle things that normally I don't handle like files, output formatting, standard library methods like `pos`, `clrscr`, `readkey`, and so on.
 2. The compiler should be able to handle things that are "naturally" exist given the chosen features. For example, while the game source code doesn't have any recursion call or use any floating-point number type, I think it would be weird not implementing those. However, things like dynamic length array, dynamic memory allocation, pointers, and fully-implemented set type are surplus to the requirements. This rationale is quite arbitrary but I settled on it.
@@ -32,7 +32,7 @@ WebAssembly has concept for local variable, so locally-used variable can be impl
 2. Value stack, a region of the memory that stores complex type values.
 3. Call frame stack, a region of the memory that stores base address of the value stack for that call and subroutine id.
 
-Consider the following pascal program:
+Consider the following Pascal program:
 ```pascal
 program test;
     type SmallStr = string[9];
@@ -60,7 +60,15 @@ When procedure `a` is called, the call frame and value stack would look somethin
 
 Things are a little more complicated for non-locally used variable. One of the limitation of WebAssembly local variable is that it can't be referenced as a pointer from outside of that function that declare it. So all non-locally used variable must be stored in memory no matter the type. This includes using upper-scope variable and using variable as an argument to a var parameter.
 
+### Input/Output and asynchronous operations
+This part looked deceptively easy when it's actually not. I wanted to emulate the terminal console on the web page. So naturally I used the [xterm.js](https://xtermjs.org/) library. It's not the easiest thing to use because I needed to manually handle the key and data event from the library, but it's still way faster and easier than reimplementing a terminal UI. The terminal emulator worked!
+
+This was the point where I realized that WebAssembly currently do not support call to asynchronous function or coroutines. If an imported function is an async function or a coroutine, it won't pause execution to wait for the result. There is a way to handle this from inside the WebAssembly code using [Asyncify](https://kripken.github.io/blog/wasm/2019/07/16/asyncify.html), but it involves call stack rewinding and is quite complicated. Instead, I used a combination of [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) and [Atomics wait and notify](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics) API. Basically, the compiled Pascal program is instantiated and executed inside a Web Worker. When there is an asynchronous call, such as readln, the web worker calls `Atomics.wait()` to pause itself. The main UI thread will call `Atomics.notify()` to the worker thread after a certain event is fired, in this case when a new line is read by the terminal emulator. So problem solved! Well, not quite yet.
+
+It turned out that Atomics wait and notify API need SharedArrayBuffer to work, and SharedArrayBuffer is only enabled[^3] if the page was [cross-origin isolated](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements). This is actually quite simple to achieve by adding extra headers to the top level document http response. Simple, if you have control of the server that serves the page. I didn't have any active VPS at the time and I certainly didn't have access to change response header in Github Page server. VPS are quite cheap and easy to setup, but it's just too much hassle and cost to set it up just for this project. I know I might use it for other purpose later, but it's still just a bit of a waste to use it only to serve a static content. Luckily, I found [a blog post](https://dev.to/stefnotch/enabling-coop-coep-without-touching-the-server-2d3n) by stefnotch that exactly solves my problem. The article has more detailed explanation, but it basically works by using a Service Worker to manually add the needed headers to the response.
+
 #### Footnotes
 
 [^1]: PTI-A class, for those who were pre-2012 ITB students. If I remember correctly, the class was reorganized into PTI-B and DasPro classes for CS & EE students due to a syllabus change in 2012.
 [^2]: I'm fully aware that there is a way to [compile Pascal to WebAssembly using FreePascal](https://wiki.freepascal.org/WebAssembly/Compiler) and maybe a lot more other ways, but I also want to make a compiler!
+[^3]: This was originally not the case, until Meltdown and Spectre changed everything
