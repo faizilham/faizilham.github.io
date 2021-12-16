@@ -78,6 +78,9 @@ jekyll-archives:
 sass:
   style: compressed
 
+kramdown:
+  footnote_backlink: "↩︎︎"
+
 # Build settings
 
 plugins:
