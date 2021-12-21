@@ -6,7 +6,7 @@ tags: compiler web-assembly
 
 *TL;DR: I made a budget Pascal compiler to WebAssembly so that I can play a hangman game that my friends and I made 10 years ago. Check out the [demo](https://faizilham.github.io/lab/budget-pascal/#hangman) and the [github repository](https://github.com/faizilham/budgetpascal).*
 
-About a month ago, I was reorganizing my old files in my laptop when I found something interesting. It was a console-based hangman game that my friends and I made in Pascal as a final project for intro to programming class[^1] back in 2011. At the time I had just finished reading [Crafting Interpreters](https://craftinginterpreters.com/) by Robert Nystrom, so I thought it would be fun to move to compilers and try to compile the hangman game to WebAssembly. Here are some interesting things I learned and made during the development.
+About a month ago, I was reorganizing my old files in my laptop when I found something interesting. It was a console-based hangman game that my friends and I made in Pascal as a final project for intro to programming class[^1] back in 2011. I had just finished reading [Crafting Interpreters](https://craftinginterpreters.com/) by Robert Nystrom, so I thought it would be fun to move to compilers and try to compile the hangman game to WebAssembly. Here are some of many interesting things I learned and made during the development.
 
 ### Choosing and "budgeting" the features
 Making a full-fledge Pascal compiler is a very time-consuming task. I want the project to be small enough that I can finish it in 4-6 weeks, so I decided to support only a subset of Pascal features and language constructs (hence, "budget"). I chose which features to implement based on three principles:
@@ -70,14 +70,14 @@ program test;
         var y1, y2: integer;
 
         procedure inner();
-        var z: integer
+        var z: integer;
         begin
             y1 := 1; // use y1 in inner
             // ...
         end;
     begin
         x := 2;
-        inner(3);
+        inner();
         // ...
     end;
 
@@ -97,7 +97,13 @@ This was the point where I realized that WebAssembly currently do not support ca
 It turned out that Atomics wait and notify API need SharedArrayBuffer to work, and SharedArrayBuffer is only enabled[^3] if the page was [cross-origin isolated](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements). This is actually quite simple to achieve by adding extra headers to the top level document http response. Simple, if you have control of the server that serves the page. I didn't have any active VPS at the time and I certainly didn't have access to change response header in Github Page server. While VPS are quite cheap and easy to setup and I might need to use it for other purposes in the future, it's still too much of a hassle and waste to set it up just for serving a static content. Luckily, I found [a blog post](https://dev.to/stefnotch/enabling-coop-coep-without-touching-the-server-2d3n) by stefnotch that exactly solves my problem. The article has more detailed explanation, but it basically works by using a Service Worker to manually add the needed headers to the response.
 
 ### Improvements
+There are a lot of things that can be improved in my compiler implementation, but here are some of the more important ones.
+1. I really should have the parser and the type checker & resolver be seperated into different modules. I made it combined so that it only need two passes (parse + type check then emit binary) instead of three or more (parse, type check, then emit binary). It is faster but in hindsight it's not that big of a difference and it just made the parser code more complex.
+2. The runtime library is currently always recompiled everytime a program is compiled. It shouldn't be that hard to pre-compile it and then "copy" it to the compiled program, but I haven't got the time. Also, I should have code the runtime library in higher-level language like C then compile it to WebAssembly instead of code it manually in WebAssembly. There are some issues with that method (for example, the Pascal runtime will include C runtime and I need to remove it or handle it so it plays nicely), but I think it's way much easier and better to do that if I were to made a serious compiler with a complete standard library.
+3. Handling messaging for async operations between the program runner worker thread and the main UI thread is quite a mess and tightly coupled. I haven't got a good idea on how to tidy it up without going too generalized.
 
+### Afterword
+All in all I'm satisfied with the result of this project. I found WebAssembly to be an interesting compilation target although there are definitely some growing pains which hopefully be resolved in the future. I also found this project to be a good reminder of where I am now compared to where I was ten years ago. Hopefully in another ten years I will see this project the way I see the old hangman game that started this project.
 
 ---
 
@@ -105,4 +111,4 @@ It turned out that Atomics wait and notify API need SharedArrayBuffer to work, a
 
 [^1]: PTI-A class, for those who were pre-2012 ITB students. If I remember correctly, the class was reorganized into PTI-B and DasPro classes for CS & EE students due to a syllabus change in 2012.
 [^2]: I'm fully aware that there is a way to [compile Pascal to WebAssembly using FreePascal](https://wiki.freepascal.org/WebAssembly/Compiler) and maybe a lot more other ways, but I also want to make a compiler!
-[^3]: This was originally not the case, until Meltdown and Spectre changed everything
+[^3]: This was originally not the case, until Meltdown and Spectre changed everything.
