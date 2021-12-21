@@ -1,3 +1,10 @@
+- title: Budget Pascal
+  date: 2021-12-21
+  desc: A compiler for a subset of Pascal to WebAssembly
+  demo: budget-pascal/#hangman
+  thumb: budget-pascal.png
+  github: https://github.com/faizilham/budgetpascal
+  post: /making-budget-pascal-compiler
 - title: CHIP-8 Emulator
   date: 2019-11-16
   desc: A CHIP-8 emulator in Rust compiled to WebAssembly

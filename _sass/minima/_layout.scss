@@ -322,8 +322,20 @@
   }
 }
 
-.lab-thumbnail {
+.lab-thumbnail-container {
   display: inline-block;
+  width: 200px;
+  height: 150px;
+  background-color: black;
+  position: relative;
+}
+
+.lab-thumbnail {
+  max-width: 200px;
+  max-height: 150px;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  margin: auto;
 }
 
 .lab-entry {
