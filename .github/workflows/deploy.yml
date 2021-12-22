@@ -8,8 +8,18 @@
 name: Blog Deployment
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '.vscode/**'
+      - '_drafts/**'
+      - 'script/**'
+      - .editorconfig
+      - .gitignore
+      - LICENSE.txt
+      - Rakefile
+      - README.md
 
 jobs:
   deploy:
