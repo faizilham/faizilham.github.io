@@ -1,8 +1,7 @@
 source "https://rubygems.org"
 
 gem "rake", "~> 13"
-gem "jekyll", "~> 3.9.3"
-gem "kramdown-parser-gfm"
+gem "jekyll", "~> 4.3"
 gem "webrick", "~> 1.8"
 
 # plugins
