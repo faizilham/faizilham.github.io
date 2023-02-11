@@ -1,0 +1,134 @@
+// Placeholder to allow defining custom styles that override everything else.
+// (Use `_sass/minima/custom-variables.scss` to override variable defaults)
+
+.site-header {
+  border-top: none;
+}
+
+.site-title {
+  &:hover{
+    text-decoration: none;
+  }
+
+  .site-title-text {
+    &,
+    &:visited {
+      color: $site-title-color;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .site-logo {
+    vertical-align: text-bottom;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.post-date {
+  color: $brand-color;
+
+  &:visited {
+    color: $brand-color;
+  }
+}
+
+.archive-list-header {
+  color: $text-color;
+
+  &:visited {
+    color: $text-color;
+  }
+}
+
+.more-post {
+  margin-top: 2.5em;
+}
+
+
+// resize post title
+.post-title,
+.post-content h1 {
+  @include relative-font-size(2.25);
+  letter-spacing: -1px;
+  line-height: 1;
+
+  @media screen and (min-width: $on-large) {
+    @include relative-font-size(2.25);
+  }
+}
+
+.post-content {
+  h1, h2, h3, h4, h5, h6 { margin-top: 0 }
+}
+
+.center-piece {
+  text-align: center;
+  margin-bottom: $spacing-unit / 2;
+  @include relative-font-size(0.8);
+}
+
+.img-container {
+  margin-bottom: $spacing-unit / 4;
+}
+
+/*
+* Lab Entries
+*/
+.lab-list {
+  margin-left: 0;
+  list-style: none;
+
+  li {
+    margin-bottom: 1.5em;
+  }
+}
+
+.lab-thumbnail-container {
+  display: inline-block;
+  width: 200px;
+  height: 150px;
+  background-color: black;
+  border: 1px solid $text-color;
+  position: relative;
+}
+
+.lab-thumbnail {
+  max-width: 200px;
+  max-height: 150px;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  margin: auto;
+}
+
+.lab-entry {
+  display: inline-block;
+  margin-left: 1em;
+  vertical-align: top;
+}
+
+.lab-title {
+  margin: 0;
+  display: block;
+  @include relative-font-size(1.5);
+}
+
+.lab-links {
+  margin-top: .5em;
+  a {
+    display: inline-block;
+    margin-right: .75em;
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}
+
+.lab-svg-icon {
+  @extend .svg-icon;
+  padding-right: 0;
+}

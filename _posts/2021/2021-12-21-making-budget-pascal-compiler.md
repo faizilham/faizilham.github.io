@@ -59,6 +59,7 @@ end.
 ```
 
 When procedure `a` is called, the call frame and value stack would look something like this in memory. Notice that variables `x`, `y` and `z` are not manually stored in the memory.
+
 ![image](/img/2021/budget-pascal-stack.png)
 
 Things are a little more complicated for non-locally used variable; that is using variable declared by the parent scope or using variable as an argument to a var parameter. One big limitation of WebAssembly local variable is that it can't be referenced as a pointer from outside of that function that declare it, so all non-locally used variable must be stored in memory regardless of the data type. For example, consider the following Pascal program.
