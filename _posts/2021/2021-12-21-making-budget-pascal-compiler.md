@@ -93,7 +93,7 @@ Variable x1 and y1 will be stored in memory, while x2, y2 and z will be stored a
 
 <picture>
   <source srcset="/img/2021/budget-pascal-stack-nonlocal-dark.png" media="(prefers-color-scheme:dark)">
-  <img src="//img/2021/budget-pascal-stack-nonlocal.png">
+  <img src="/img/2021/budget-pascal-stack-nonlocal.png">
 </picture>
 
 ### Read, ReadLn, and other async operations
