@@ -29,8 +29,8 @@ linkedin_username: faizilham
 # - username: jekyll2
 #   instance: example.com
 
-disqus:
-  shortname: labsfaiz
+# disqus:
+#   shortname: labsfaiz
 
 permalink: /:title
 
