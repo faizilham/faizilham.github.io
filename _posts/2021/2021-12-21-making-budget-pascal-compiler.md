@@ -60,7 +60,10 @@ end.
 
 When procedure `a` is called, the call frame and value stack would look something like this in memory. Notice that variables `x`, `y` and `z` are not manually stored in the memory.
 
-![image](/img/2021/budget-pascal-stack.png)
+<picture>
+  <source srcset="/img/2021/budget-pascal-stack-dark.png" media="(prefers-color-scheme:dark)">
+  <img src="/img/2021/budget-pascal-stack.png">
+</picture>
 
 Things are a little more complicated for non-locally used variable; that is using variable declared by the parent scope or using variable as an argument to a var parameter. One big limitation of WebAssembly local variable is that it can't be referenced as a pointer from outside of that function that declare it, so all non-locally used variable must be stored in memory regardless of the data type. For example, consider the following Pascal program.
 ```pascal
@@ -88,7 +91,10 @@ end.
 ```
 Variable x1 and y1 will be stored in memory, while x2, y2 and z will be stored as WebAssembly local variables. The call frame and value stack will look like this when procedure `inner` is called.
 
-![image](/img/2021/budget-pascal-stack-nonlocal.png)
+<picture>
+  <source srcset="/img/2021/budget-pascal-stack-nonlocal-dark.png" media="(prefers-color-scheme:dark)">
+  <img src="//img/2021/budget-pascal-stack-nonlocal.png">
+</picture>
 
 ### Read, ReadLn, and other async operations
 This part looked deceptively easy when it's actually not. I wanted to emulate the terminal console on the web page. So naturally I used the [xterm.js](https://xtermjs.org/) library. It's not the easiest thing to use because I needed to manually handle the key and data event from the library, but it's still way faster and easier than reimplementing a terminal UI. The terminal emulator worked!
