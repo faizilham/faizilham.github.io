@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>CHIP-8 Emulator</title>
+    <link rel="shortcut icon" href="assets/icon_yb.png" id="icon" />
+  <link href="style-b1db0843.css" rel="stylesheet"></head>
+  <body>
+    <div class="outer">
+      <h1 class="title">CHIP-8 Emulator</h1>
+      <div class="container">
+        <div>
+          <canvas class="display" id="display"></canvas>
+        </div>
+        <div class="window hidden" id="configwindow">
+            <div class="config-body">
+              <div class="config-title">Color Scheme</div>
+              <div class="config-cell">
+                <select class="select" id="colorscheme">
+                  <option value="yellow-blue">Yellow on Blue</option>
+                  <option value="green-black">Green on Black</option>
+                  <option value="white-black">White on Black</option>
+                </select>
+              </div>
+
+              <div class="config-title">Display Type</div>
+              <div class="config-cell">
+                <select class="select" id="displaytype">
+                  <option value="normal">Normal Display (No Afterglow)</option>
+                  <option value="phosphor">Phosphor Display</option>
+                </select>
+              </div>
+
+              <div class="config-title">Implementation Quirks (auto-set when loading example ROMs)</div>
+              <div class="config-cell">
+                <label class="chk-quirk">
+                  <input type="checkbox" id="quirkShiftChk" />
+                  Shift: opcodes 8xy6 & 8xyE shift Vy instead of Vx
+                </label>
+                <label class="chk-quirk">
+                  <input type="checkbox" id="quirkLoadRegChk" />
+                  Load/Store regs: opcodes Fx55 & Fx65 won't increase I register by x + 1
+                </label>
+                <label class="chk-quirk">
+                    <input type="checkbox" id="quirkWrapSpriteChk" />
+                    Wrap sprite: when parts of sprite are drawn outside of display, wrap it instead of clipping it
+                  </label>
+              </div>
+
+              <div class="config-cell">
+                <button id="closeconfig" class="close-btn btn">Close</button>
+              </div>
+
+            </div>
+        </div>
+        <div class="window hidden" id="helpwindow">
+          <h4>Keymappings</h4>
+          <pre class="keymapping">
+chip8        pc keyboard
+1 2 3 C      1 2 3 4
+4 5 6 D      Q W E R
+7 8 9 E      A S D F
+A 0 B F      Z X C V</pre>
+          <div id="romdescription" class="description"></div>
+          <button id="closehelp" class="close-btn btn">Close</button>
+        </div>
+        <div class="menu" id="menu">
+            <input type="file" class="hidden" id="fileinput" accept=".ch8" />
+            <select class="select romselect" id="romselect">
+              <option>Select ROM...</option>
+              <option>Loading List...</option>
+            </select>
+            <button id="startpause" class="startpause btn" disabled>Play</button>
+            <button id="turnoff" class="btn" disabled>Turn Off</button>
+            <button id="configbtn" class="btn" title="Set Configuration">Config</button>
+            <button id="helpbtn" class="btn">Help</button>
+        </div>
+      </div>
+      <div class="footer">
+        2019 <a class="links" href="https://faizilham.github.io/lab/">Faiz Ilham</a>
+        | <a class="links" href="https://github.com/faizilham/chip8-rs">Github</a>
+        | <a class="links" href="/revisiting-chip8">Dev Blog</a>
+      </div>
+    </div>
+    <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+  <script type="text/javascript" src="index-b1db0843.js"></script></body>
+</html>
