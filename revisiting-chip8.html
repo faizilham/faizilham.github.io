@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Revisiting Chip-8 | faiz.memdump()</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Revisiting Chip-8" />
+<meta name="author" content="Faiz Ilham" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="It’s been a while since I write emulator projects. While I do want to make more “serious” emulator like NES or GameBoy, I decided to do a warm up project by writing a Chip-8 emulator once more. Here are some interesting things I found and implemented during the development." />
+<meta property="og:description" content="It’s been a while since I write emulator projects. While I do want to make more “serious” emulator like NES or GameBoy, I decided to do a warm up project by writing a Chip-8 emulator once more. Here are some interesting things I found and implemented during the development." />
+<link rel="canonical" href="https://faizilham.github.io/revisiting-chip8" />
+<meta property="og:url" content="https://faizilham.github.io/revisiting-chip8" />
+<meta property="og:site_name" content="faiz.memdump()" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-11-23T00:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Revisiting Chip-8" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Faiz Ilham"},"dateModified":"2019-11-23T00:00:00+00:00","datePublished":"2019-11-23T00:00:00+00:00","description":"It’s been a while since I write emulator projects. While I do want to make more “serious” emulator like NES or GameBoy, I decided to do a warm up project by writing a Chip-8 emulator once more. Here are some interesting things I found and implemented during the development.","headline":"Revisiting Chip-8","mainEntityOfPage":{"@type":"WebPage","@id":"https://faizilham.github.io/revisiting-chip8"},"url":"https://faizilham.github.io/revisiting-chip8"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css">
+  <link rel="shortcut icon" href="/logo.png"><link type="application/atom+xml" rel="alternate" href="https://faizilham.github.io/feed.xml" title="faiz.memdump()" /></head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">
+      <img class="site-logo" src="/logo.png" />
+      <span class="site-title-text">faiz.memdump()</span>
+    </a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg width="18px" height="15px">
+              <use xlink:href="/assets/minima.svg#burger-bar"></use>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/archive/">Archive</a><a class="page-link" href="/lab/">Lab</a><a class="page-link" href="/about">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Revisiting Chip-8</h1>
+
+    <p class="post-meta">
+      Posted at
+      <time class="dt-published" datetime="2019-11-23T00:00:00+00:00" itemprop="datePublished">2019-11-23
+      </time>in
+        
+          <a href="/tag/emulator">Emulator</a>,
+          <a href="/tag/javascript">Javascript</a>,
+          <a href="/tag/rust">Rust</a>,
+          <a href="/tag/web-assembly">Web Assembly</a></p>
+
+    <div class="post-content e-content" itemprop="articleBody">
+      <p>It’s been a while since I write emulator projects. While I do want to make more “serious” emulator like
+NES or GameBoy, I decided to do a warm up project by writing a <a href="/lab/chip8">Chip-8 emulator</a> once more.
+Here are some interesting things I found and implemented during the development.</p>
+
+<h3 id="dealing-with-flicker">Dealing with Flicker</h3>
+<p>Chip-8 games are by nature flickery. This happens because in original Chip-8 the only way to move a sprite is by clearing screen
+or erasing the sprite first, and then redraw it at the new position. Since it can only be done in two instructions,
+it means the erase and the draw instruction may be seperated in different update-draw cycles, thus
+results in flickering. This is even more pronounced when we consider that the CPU vs display speed ratio of Chip-8
+is quite low (500:60 Hz, so 8-9 instructions/draw) and that there are usually several instructions seperating the erase and draw
+instructions (e.g. for recalculating new sprite position without storing the old one).</p>
+
+<p>There are some ways to deal with this. First, by not dealing with it and let it flicks. This is the easiest
+method and actually accurate with the behavior of original Chip-8, but I want to do more here. Second,
+by pooling the draw instruction to be actually drawn only after several instructions later, so that a pair of
+erase-draw instruction is <em>probably</em> done in one actual draw. I don’t really like this approach since
+it’s likely hard to get the right timing for every kinds of games or ROMs, and it can introduce visual
+glitches in some edge cases.</p>
+
+<p>The last method is by simulating the old phosphor screen behavior. Old phosphor screens have light decay time,
+meaning that when a pixel is turned off from a previously turned on state it still gives off a fading afterglow
+light for several milliseconds. I like this method since it only changes the behavior of the off pixels
+and simulates the real screen behavior, so I implemented it. The result quite pleases me.</p>
+
+<div class="center-piece">
+    <div class="img-container">
+    <img src="/img/2019/chip8_normal_ufo.gif" width="350" title="Normal flickery display" />
+    <img src="/img/2019/chip8_phosphor_ufo.gif" width="350" title="Simulated phosphor screen display" />
+    </div>
+    Normal Flickery Display vs Simulated Phosphor Display
+</div>
+
+<h3 id="implementation-quirks">Implementation Quirks</h3>
+<p>I used <a href="http://devernay.free.fr/hacks/chip8/C8TECH10.HTM">Cowgod’s Chip-8 Reference</a> as my primary reference
+when I made my <a href="https://github.com/faizilham/chip8js">previous CHIP-8 project</a>. It turns out that there are some
+implementation quirks that is documented as the original behavior in the reference, and my old emulator didn’t
+handle it when games, especially older ones, expect the original behavior. In this project, I handled
+three prominent quirks that can be toggled on or off by configuration.</p>
+
+<ol>
+  <li>
+    <p>SHL &amp; SHR instruction quirk</p>
+
+    <p>In the original Chip-8, instruction <code class="language-plaintext highlighter-rouge">8xy8</code> SHR and <code class="language-plaintext highlighter-rouge">8xyE</code> SHL should shift the value of register Vx by value
+ of Vy, so that these instructions are interpreted as <code class="language-plaintext highlighter-rouge">Vx = Vx &gt;&gt; Vy</code> and <code class="language-plaintext highlighter-rouge">Vx = Vx &lt;&lt; Vy</code>.
+ Some newer games mistakenly use this instruction as if it shift Vx by itself, i.e. <code class="language-plaintext highlighter-rouge">Vx = Vx &gt;&gt; Vx</code>
+ and <code class="language-plaintext highlighter-rouge">Vx = Vx &lt;&lt; Vx</code>. Notable games with this quirky behavior are Tic-Tac-Toe and Space Invaders.</p>
+  </li>
+  <li>
+    <p>Load &amp; Store Register instruction quirk</p>
+
+    <p>In the original Chip-8, instruction <code class="language-plaintext highlighter-rouge">Fx55</code> and <code class="language-plaintext highlighter-rouge">Fx65</code> should store/load register the values of V0 to Vx
+ into/from memory starting from address I, and then increment register I by x (<code class="language-plaintext highlighter-rouge">I = I + x</code>).
+ Some newer games do not take into account the register I increment, and behaves as if I is not
+ changed by these instructions. Tic-Tac-Toe and Space Invaders also have this quirk.</p>
+  </li>
+  <li>
+    <p>Sprite wrapping</p>
+
+    <p>The Cowgod’s reference said that a sprite partially drawn outside of display boundary will be
+ wrapped around at the opposite end of the screen. This is not the <a href="http://laurencescotford.co.uk/?p=304">right behavior</a>.
+ A sprite will be clipped if it’s partially drawn outside of display, but it will be wrapped around
+ if <em>all</em> of the sprite is drawn outside of the display. I’m not really sure if there are any games that depend
+ on sprite wrapping behavior, but I’ll give the option to do so.</p>
+  </li>
+</ol>
+
+<h3 id="fx0a-wait-key-implementation">Fx0A Wait Key Implementation</h3>
+<p>There are three instructions related to keypad input read: <code class="language-plaintext highlighter-rouge">Ex9E</code> skip if key Vx pressed, <code class="language-plaintext highlighter-rouge">ExA1</code> skip if key Vx
+not pressed, and <code class="language-plaintext highlighter-rouge">Fx0A</code> wait until key is pressed and store to Vx. Instruction <code class="language-plaintext highlighter-rouge">Ex9E</code> and <code class="language-plaintext highlighter-rouge">ExA1</code> is just like that: skip
+next instruction if key Vx is pressed / not pressed. For <code class="language-plaintext highlighter-rouge">Fx0A</code> however, the description is a bit misleading.
+According to this <a href="https://retrocomputing.stackexchange.com/questions/358/how-are-held-down-keys-handled-in-chip-8">thread</a>
+and <a href="http://laurencescotford.co.uk/?p=347">post</a>, the correct behavior of <code class="language-plaintext highlighter-rouge">Fx0A</code> is something like this:</p>
+
+<ol>
+  <li>Stop execution until a key is pressed</li>
+  <li>When a key is pressed, store that key temporarily as K if K is not set. Execution is still stopped.</li>
+  <li>When key K is released after it was pressed, store K to Vx, unset K and continue execution</li>
+</ol>
+
+<h3 id="rust-to-webassembly">Rust to WebAssembly</h3>
+<p>I wrote my previous CHIP-8 emulator in C compiled to WebAssembly by using Emscripten. I used Rust compiled to WebAssembly
+in this project, because I always want to try it. The rust-to-wasm compilation is done by using
+<a href="https://github.com/rustwasm/wasm-pack">wasm-pack toolkit</a>.</p>
+
+<p>I found the wasm-pack toolkit is quite easy to use. The resulting wasm file can also be integrated and bundled
+easily using webpack. While I do like parcel more than webpack, unfortunately there are still some integration
+issues between wasm-pack and parcel, so I just use webpack. Building the project is a two-step process:
+(1) build the wasm file from Rust using wasm-pack, and (2) bundle the wasm file, Javascript loader, styles,
+and other files using webpack.</p>
+
+<p>I wrote the CPU and display buffer of the emulator in Rust. However, for the actual I/O parts like drawing
+the display buffer to canvas, playing beep sound and reading key input, I still use Javascript.
+I did this because currently WebAssembly can’t access DOM directly without moving some data from and into
+the WebAssembly memory buffer. While wasm-pack can generate the bridge code easily, I don’t think the required data moving
+is worth the performance than just directly using Javascript. In contrast, the Javascript code can directly read
+WebAssembly memory buffer, so it doesn’t need to copy anything. I think this is the best solution
+until WebAssembly can access DOM directly.</p>
+
+<p>Another advantage of offloading the I/O codes from wasm to Javascript is size. In previous project, I used
+SDL2 for drawing the canvas, playing beep sound and read key input. While using SDL2 is neat, it results
+in a big-sized wasm file, since it also includes all the SDL2 library codes. For comparison, my old
+emulator page size is around 5 MB, whereas the new emulator is under 100 KB.</p>
+
+<h3 id="closure">Closure</h3>
+<p>It’s been quite a fun revisiting the Chip-8 emulation. At first I wanted to extend the emulator
+to include SuperChip instructions and increase the overall emulation accuracy, but I decided the effort
+is best used in more “serious” emulator. I’m sure there are still some edge cases that my emulator can’t handle accurately.
+For the next emulator, I’m probably going for the original Space Invaders on Taito 8080 arcade system, since it seems
+quite easier to make than NES or GameBoy.</p>
+
+    </div>
+  </header><a class="u-url" href="/revisiting-chip8" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">faiz.memdump()</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-3">
+        <p>A digital snapshot of my memories
+</p>
+
+        <ul class="contact-list">
+          <li class="p-name">Faiz Ilham</li></ul>
+
+        <a rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">
+          <img alt="Creative Commons License" style="border-width:0" src="/assets/cc-by-sa.png" title="This blog is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License" />
+        </a>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/faizilham"><svg class="svg-icon grey"><use xlink:href="/assets/minima.svg#github"></use></svg> faizilham</a></li><li><a href="https://www.linkedin.com/in/faizilham"><svg class="svg-icon grey"><use xlink:href="/assets/minima.svg#linkedin"></use></svg> faizilham</a></li><li><a href="https://www.facebook.com/faiz.ilham"><svg class="svg-icon grey"><use xlink:href="/assets/minima.svg#facebook"></use></svg> faiz.ilham</a></li><li><a href="/feed.xml"><svg class="svg-icon grey"><use xlink:href="/assets/minima.svg#rss"></use></svg> <span>RSS</span></a></li></ul>
+</div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

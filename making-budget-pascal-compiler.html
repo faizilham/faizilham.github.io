@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Making a budget Pascal compiler to WebAssembly | faiz.memdump()</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Making a budget Pascal compiler to WebAssembly" />
+<meta name="author" content="Faiz Ilham" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="TL;DR: I made a budget Pascal compiler to WebAssembly so that I can play a hangman game that my friends and I made 10 years ago. Check out the demo and the github repository." />
+<meta property="og:description" content="TL;DR: I made a budget Pascal compiler to WebAssembly so that I can play a hangman game that my friends and I made 10 years ago. Check out the demo and the github repository." />
+<link rel="canonical" href="https://faizilham.github.io/making-budget-pascal-compiler" />
+<meta property="og:url" content="https://faizilham.github.io/making-budget-pascal-compiler" />
+<meta property="og:site_name" content="faiz.memdump()" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-12-21T00:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Making a budget Pascal compiler to WebAssembly" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Faiz Ilham"},"dateModified":"2021-12-21T00:00:00+00:00","datePublished":"2021-12-21T00:00:00+00:00","description":"TL;DR: I made a budget Pascal compiler to WebAssembly so that I can play a hangman game that my friends and I made 10 years ago. Check out the demo and the github repository.","headline":"Making a budget Pascal compiler to WebAssembly","mainEntityOfPage":{"@type":"WebPage","@id":"https://faizilham.github.io/making-budget-pascal-compiler"},"url":"https://faizilham.github.io/making-budget-pascal-compiler"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css">
+  <link rel="shortcut icon" href="/logo.png"><link type="application/atom+xml" rel="alternate" href="https://faizilham.github.io/feed.xml" title="faiz.memdump()" /></head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">
+      <img class="site-logo" src="/logo.png" />
+      <span class="site-title-text">faiz.memdump()</span>
+    </a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg width="18px" height="15px">
+              <use xlink:href="/assets/minima.svg#burger-bar"></use>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/archive/">Archive</a><a class="page-link" href="/lab/">Lab</a><a class="page-link" href="/about">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Making a budget Pascal compiler to WebAssembly</h1>
+
+    <p class="post-meta">
+      Posted at
+      <time class="dt-published" datetime="2021-12-21T00:00:00+00:00" itemprop="datePublished">2021-12-21
+      </time>in
+        
+          <a href="/tag/compiler">Compiler</a>,
+          <a href="/tag/web-assembly">Web Assembly</a></p>
+
+    <div class="post-content e-content" itemprop="articleBody">
+      <p><em>TL;DR: I made a budget Pascal compiler to WebAssembly so that I can play a hangman game that my friends and I made 10 years ago. Check out the <a href="https://faizilham.github.io/lab/budget-pascal/#hangman">demo</a> and the <a href="https://github.com/faizilham/budgetpascal">github repository</a>.</em></p>
+
+<p>About a month ago, I was reorganizing my old files in my laptop when I found something interesting. It was a console-based hangman game that my friends and I made in Pascal as a final project for intro to programming class<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup> back in 2011. I had just finished reading <a href="https://craftinginterpreters.com/">Crafting Interpreters</a> by Robert Nystrom, so I thought it would be fun to move to compilers and try to compile the hangman game to WebAssembly. Here are some of many interesting things I learned and made during the development.</p>
+
+<h3 id="choosing-and-budgeting-the-features">Choosing and “budgeting” the features</h3>
+<p>Making a full-fledge Pascal compiler is a very time-consuming task. I want the project to be small enough that I can finish it in 4-6 weeks, so I decided to support only a subset of Pascal features and language constructs (hence, “budget”). I chose which features to implement based on three principles:</p>
+<ol>
+  <li>The compiler should be able to compile the hangman game without any changes to the game’s source code. This means I need to handle things that normally I don’t handle like files, output formatting, standard library methods like <code class="language-plaintext highlighter-rouge">pos</code>, <code class="language-plaintext highlighter-rouge">clrscr</code>, <code class="language-plaintext highlighter-rouge">readkey</code>, and so on.</li>
+  <li>The compiler should be able to handle things that “naturally” exist given the chosen features. For example, while the game source code doesn’t have any recursion call or use any floating-point number type, I think it would be weird not implementing those. However, things like dynamic length array, dynamic memory allocation, pointers, and fully-implemented set type are surplus to the requirements. This rationale is quite arbitrary but I settled on it.</li>
+  <li>The compiler should compile a strict subset of Pascal. This means while it can’t compile some Pascal programs, all programs that it can compile should be compilable by other full-feature Pascal compiler like FreePascal. There should be no program that is valid for this compiler but invalid for other compilers. This is easier said than done and I’m still not 100% sure if the implementation is indeed a strict subset.</li>
+</ol>
+
+<p>The full detail of chosen features can be found in the <a href="https://github.com/faizilham/budgetpascal#which-subset-of-pascal">repository’s readme</a>. In summary, the compiler can handle:</p>
+<ul>
+  <li>Basic data types like <code class="language-plaintext highlighter-rouge">integer</code>, <code class="language-plaintext highlighter-rouge">real</code>, <code class="language-plaintext highlighter-rouge">char</code>, <code class="language-plaintext highlighter-rouge">boolean</code>, <code class="language-plaintext highlighter-rouge">string</code>, <code class="language-plaintext highlighter-rouge">array</code>, <code class="language-plaintext highlighter-rouge">record</code> and <code class="language-plaintext highlighter-rouge">file</code></li>
+  <li>Variable, constant, type alias, and subroutine (procedure / function) declaration</li>
+  <li>Basic expression, subroutine call and control flow statement</li>
+  <li>Internal declaration (e.g. procedure inside procedure) with local / global scoping</li>
+  <li>A few standard library method call</li>
+</ul>
+
+<h3 id="generating-webassembly-binary">Generating WebAssembly binary</h3>
+<p>I wanted the hangman game to be playable on a web page. There are three approaches<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">2</a></sup> to do it: (1) make a virtual machine that interprets and runs the Pascal program, (2) transpile the Pascal program to Javascript and then run it using <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/Function">Function object</a>, and (3) compile the Pascal program to WebAssembly. I chose the third option because I’m interested in WebAssembly for quite some time and it seems more fun and challenging than “just” making a VM or transpiling to Javascript.</p>
+
+<p>While it is possible to just manually produce WebAssembly binary bytecodes, I used the <a href="https://github.com/AssemblyScript/binaryen.js/">binaryen-js</a> library because it’s easier and it also have validation and optimization features. The downside is that it is quite large, about 5 MB even after packed using parceljs. It also uses tree representation for validating and optimizing the WebAssembly module, so a few expressions like multivalue tuples and manual stack manipulation are a little bit harder to express. At the time I didn’t realize there’s also <a href="https://github.com/AssemblyScript/wabt.js">wabt.js</a>, so it is possible to produce WebAssembly code in text format first and then convert it to binary format.</p>
+
+<h3 id="variables-and-call-stack">Variables and call stack</h3>
+<p>WebAssembly has concept for <a href="https://webassembly.github.io/spec/core/syntax/instructions.html#variable-instructions">local variable</a>, so locally-used variable can be implemented using it. However, it can only store integer or float value. For basic types the compiler can just directly use <code class="language-plaintext highlighter-rouge">f64</code> variable for real and <code class="language-plaintext highlighter-rouge">i32</code> variable for ordinals (integer, char, boolean), but for complex type like string, array, or record, it needs to maintain a call stack in the memory and store the address of the value as an <code class="language-plaintext highlighter-rouge">i32</code> local variable. Values in the call stack are allocated when a subroutine is called, and deallocated when the subroutine returns. The call stack is implemented in three parts:</p>
+<ol>
+  <li>Two global variable SP (stack pointer) and (FP) frame pointer. SP stores an address to top of value stack, and FP stores an address to top of call frame stack.</li>
+  <li>Value stack, a region of the memory that stores complex type values.</li>
+  <li>Call frame stack, a region of the memory that stores base address of the value stack for that call and subroutine id.</li>
+</ol>
+
+<p>Let’s look at the following Pascal program.</p>
+<div class="language-pascal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">program</span> <span class="n">test</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">SmallStr</span> <span class="p">=</span> <span class="k">string</span><span class="p">[</span><span class="m">9</span><span class="p">];</span>
+    <span class="k">var</span> <span class="n">str</span><span class="p">:</span> <span class="n">SmallStr</span><span class="p">;</span>
+        <span class="n">x</span><span class="p">:</span> <span class="kt">integer</span><span class="p">;</span>
+
+    <span class="k">procedure</span> <span class="n">a</span><span class="p">(</span><span class="n">strA</span><span class="p">:</span> <span class="n">SmallStr</span><span class="p">;</span> <span class="n">z</span><span class="p">:</span> <span class="kt">char</span><span class="p">);</span>
+    <span class="k">begin</span>
+        <span class="c1">// ...
+</span>    <span class="k">end</span><span class="p">;</span>
+
+    <span class="k">procedure</span> <span class="n">b</span><span class="p">(</span><span class="n">strB</span><span class="p">:</span> <span class="n">SmallStr</span><span class="p">);</span>
+    <span class="k">var</span> <span class="n">strB1</span><span class="p">:</span> <span class="n">SmallStr</span><span class="p">;</span>
+        <span class="n">y</span><span class="p">:</span> <span class="kt">boolean</span><span class="p">;</span>
+    <span class="k">begin</span>
+        <span class="c1">// ...
+</span>        <span class="n">y</span> <span class="p">:=</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="n">a</span><span class="p">(</span><span class="n">strB</span><span class="p">,</span> <span class="s">'a'</span><span class="p">);</span>
+    <span class="k">end</span><span class="p">;</span>
+
+<span class="k">begin</span>
+    <span class="n">b</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+<span class="k">end</span><span class="p">.</span>
+</code></pre></div></div>
+
+<p>When procedure <code class="language-plaintext highlighter-rouge">a</code> is called, the call frame and value stack would look something like this in memory. Notice that variables <code class="language-plaintext highlighter-rouge">x</code>, <code class="language-plaintext highlighter-rouge">y</code> and <code class="language-plaintext highlighter-rouge">z</code> are not manually stored in the memory.</p>
+
+<picture>
+  <source srcset="/img/2021/budget-pascal-stack-dark.png" media="(prefers-color-scheme:dark)" />
+  <img src="/img/2021/budget-pascal-stack.png" />
+</picture>
+
+<p>Things are a little more complicated for non-locally used variable; that is using variable declared by the parent scope or using variable as an argument to a var parameter. One big limitation of WebAssembly local variable is that it can’t be referenced as a pointer from outside of that function that declare it, so all non-locally used variable must be stored in memory regardless of the data type. For example, consider the following Pascal program.</p>
+<div class="language-pascal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">program</span> <span class="n">test</span><span class="p">;</span>
+    <span class="k">var</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="kt">integer</span><span class="p">;</span>
+
+    <span class="k">procedure</span> <span class="n">outer</span><span class="p">(</span><span class="k">var</span> <span class="n">x</span><span class="p">:</span> <span class="kt">integer</span><span class="p">);</span>
+        <span class="k">var</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">:</span> <span class="kt">integer</span><span class="p">;</span>
+
+        <span class="k">procedure</span> <span class="n">inner</span><span class="p">();</span>
+        <span class="k">var</span> <span class="n">z</span><span class="p">:</span> <span class="kt">integer</span><span class="p">;</span>
+        <span class="k">begin</span>
+            <span class="n">y1</span> <span class="p">:=</span> <span class="m">1</span><span class="p">;</span> <span class="c1">// use y1 in inner
+</span>            <span class="c1">// ...
+</span>        <span class="k">end</span><span class="p">;</span>
+    <span class="k">begin</span>
+        <span class="n">x</span> <span class="p">:=</span> <span class="m">2</span><span class="p">;</span>
+        <span class="n">inner</span><span class="p">();</span>
+        <span class="c1">// ...
+</span>    <span class="k">end</span><span class="p">;</span>
+
+<span class="k">begin</span>
+    <span class="n">outer</span><span class="p">(</span><span class="n">x1</span><span class="p">);</span> <span class="c1">// use x1 as argument to a var parameter
+</span><span class="k">end</span><span class="p">.</span>
+</code></pre></div></div>
+<p>Variable x1 and y1 will be stored in memory, while x2, y2 and z will be stored as WebAssembly local variables. The call frame and value stack will look like this when procedure <code class="language-plaintext highlighter-rouge">inner</code> is called.</p>
+
+<picture>
+  <source srcset="/img/2021/budget-pascal-stack-nonlocal-dark.png" media="(prefers-color-scheme:dark)" />
+  <img src="/img/2021/budget-pascal-stack-nonlocal.png" />
+</picture>
+
+<h3 id="read-readln-and-other-async-operations">Read, ReadLn, and other async operations</h3>
+<p>This part looked deceptively easy when it’s actually not. I wanted to emulate the terminal console on the web page. So naturally I used the <a href="https://xtermjs.org/">xterm.js</a> library. It’s not the easiest thing to use because I needed to manually handle the key and data event from the library, but it’s still way faster and easier than reimplementing a terminal UI. The terminal emulator worked!</p>
+
+<p>This was the point where I realized that WebAssembly currently do not support call to asynchronous function or coroutines. If an imported function is an async function or a coroutine, it won’t pause execution to wait for the result. There is a way to handle this from inside the WebAssembly code using <a href="https://kripken.github.io/blog/wasm/2019/07/16/asyncify.html">Asyncify</a>, but it involves call stack rewinding and is quite complicated. Instead, I used a combination of <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers">Web Workers</a> and <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics">Atomics wait and notify</a> API. Basically, the compiled Pascal program is instantiated and executed inside a Web Worker. When there is an asynchronous call, such as readln, the web worker calls <code class="language-plaintext highlighter-rouge">Atomics.wait()</code> to pause itself. The main UI thread will call <code class="language-plaintext highlighter-rouge">Atomics.notify()</code> to the worker thread after a certain event is fired, in this case when a new line is read by the terminal emulator. So problem solved! Well, not quite yet.</p>
+
+<p>It turned out that Atomics wait and notify API need SharedArrayBuffer to work, and SharedArrayBuffer is only enabled<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">3</a></sup> if the page was <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements">cross-origin isolated</a>. This is actually quite simple to achieve by adding extra headers to the top level document http response. Simple, if you have control of the server that serves the page. I didn’t have any active VPS at the time and I certainly didn’t have access to change response header in Github Page server. While VPS are quite cheap and easy to setup and I might need to use it for other purposes in the future, it’s still too much of a hassle and waste to set it up just for serving a static content. Luckily, I found <a href="https://dev.to/stefnotch/enabling-coop-coep-without-touching-the-server-2d3n">a blog post</a> by stefnotch that exactly solves my problem. The article has more detailed explanation, but it basically works by using a Service Worker to manually add the needed headers to the response.</p>
+
+<h3 id="improvements">Improvements</h3>
+<p>There are a lot of things that can be improved in my compiler implementation, but here are some of the more important ones.</p>
+<ol>
+  <li>I really should have the parser and the type checker &amp; resolver be seperated into different modules. I made it combined so that it only need two passes (parse + type check then emit binary) instead of three or more (parse, type check, then emit binary). It is faster but in hindsight it’s not that big of a difference and it makes the parser code more complex.</li>
+  <li>The runtime library is currently always recompiled everytime a program is compiled. It shouldn’t be that hard to pre-compile it and then “copy” it to the compiled program, but I haven’t got the time. Also, I should have make the runtime library in higher-level language like C then compile it to WebAssembly, instead of making it manually in WebAssembly. There are some issues with that method (for example, the Pascal runtime will include C runtime and I need to remove it or handle it so it plays nicely), but I think it’s way much easier and better to do that if I were to made a serious compiler with a complete standard library.</li>
+  <li>Handling messaging for async operations between the program runner worker thread and the main UI thread is quite a mess and tightly coupled. I haven’t got a good idea on how to tidy it up without going too generalized.</li>
+</ol>
+
+<h3 id="afterword">Afterword</h3>
+<p>All in all I’m satisfied with the result of this project. I found WebAssembly to be an interesting compilation target, although there are definitely some growing pains which should be resolved in the future. I also found this project to be a good reminder of where I am now compared to where I was ten years ago. Hopefully, in another ten years I will see this project the way I see the old hangman game that started this project.</p>
+
+<hr />
+
+<h4 id="footnotes">Footnotes</h4>
+
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1" role="doc-endnote">
+      <p>PTI-A class, for those who were pre-2012 ITB students. If I remember correctly, the class was reorganized into PTI-B and DasPro classes for CS &amp; EE students due to a syllabus change in 2012. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">↩︎︎</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>I’m fully aware that there is a way to <a href="https://wiki.freepascal.org/WebAssembly/Compiler">compile Pascal to WebAssembly using FreePascal</a> and maybe a lot more other ways, but I also want to make a compiler! <a href="#fnref:2" class="reversefootnote" role="doc-backlink">↩︎︎</a></p>
+    </li>
+    <li id="fn:3" role="doc-endnote">
+      <p>This was originally not the case, until Meltdown and Spectre changed everything. <a href="#fnref:3" class="reversefootnote" role="doc-backlink">↩︎︎</a></p>
+    </li>
+  </ol>
+</div>
+
+    </div>
+  </header><a class="u-url" href="/making-budget-pascal-compiler" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">faiz.memdump()</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-3">
+        <p>A digital snapshot of my memories
+</p>
+
+        <ul class="contact-list">
+          <li class="p-name">Faiz Ilham</li></ul>
+
+        <a rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">
+          <img alt="Creative Commons License" style="border-width:0" src="/assets/cc-by-sa.png" title="This blog is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License" />
+        </a>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/faizilham"><svg class="svg-icon grey"><use xlink:href="/assets/minima.svg#github"></use></svg> faizilham</a></li><li><a href="https://www.linkedin.com/in/faizilham"><svg class="svg-icon grey"><use xlink:href="/assets/minima.svg#linkedin"></use></svg> faizilham</a></li><li><a href="https://www.facebook.com/faiz.ilham"><svg class="svg-icon grey"><use xlink:href="/assets/minima.svg#facebook"></use></svg> faiz.ilham</a></li><li><a href="/feed.xml"><svg class="svg-icon grey"><use xlink:href="/assets/minima.svg#rss"></use></svg> <span>RSS</span></a></li></ul>
+</div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
